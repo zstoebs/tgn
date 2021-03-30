@@ -3,6 +3,8 @@ import math
 import numpy as np
 import torch
 from sklearn.metrics import average_precision_score, roc_auc_score
+import pickle
+import os
 
 
 def eval_edge_prediction(model, negative_edge_sampler, data, n_neighbors, batch_size=200):
@@ -10,6 +12,9 @@ def eval_edge_prediction(model, negative_edge_sampler, data, n_neighbors, batch_
   # negatives for validation / test set)
   assert negative_edge_sampler.seed is not None
   negative_edge_sampler.reset_random_state()
+  results_files = os.listdir('results')
+  eval_files = [f for f in results_files if 'edge_eval' in f]
+  run_idx = len(eval_files)
 
   val_ap, val_auc = [], []
   with torch.no_grad():
@@ -42,6 +47,17 @@ def eval_edge_prediction(model, negative_edge_sampler, data, n_neighbors, batch_
 
       val_ap.append(average_precision_score(true_label, pred_score))
       val_auc.append(roc_auc_score(true_label, pred_score))
+      pickle.dump({'pos_prob':pos_prob.cpu().numpy(),
+                    'neg_prob':neg_prob.cpu().numpy(),
+                    'pred_score':pred_score,
+                    'true_label':true_label,
+                    'sources_batch': sources_batch.cpu().numpy(),
+                    'destinations_batch':destinations_batch.cpu().numpy(),
+                    'negative_samples':negative_samples.cpu().numpy(),
+                    'timestamps_batch':timestamps_batch.cpu().numpy(),
+                    'edge_idxs_batch':edge_idxs_batch.cpu().numpy(),
+                    'n_neighbors':n_neighbors,
+                  },open('results/edge_eval_%d.pkl'%(run_idx)))
 
   return np.mean(val_ap), np.mean(val_auc)
 
@@ -50,6 +66,9 @@ def eval_node_classification(tgn, decoder, data, edge_idxs, batch_size, n_neighb
   pred_prob = np.zeros(len(data.sources))
   num_instance = len(data.sources)
   num_batch = math.ceil(num_instance / batch_size)
+  results_files = os.listdir('results')
+  eval_files = [f for f in results_files if 'node_eval' in f]
+  run_idx = len(eval_files)
 
   with torch.no_grad():
     decoder.eval()
@@ -71,6 +90,16 @@ def eval_node_classification(tgn, decoder, data, edge_idxs, batch_size, n_neighb
                                                                                    n_neighbors)
       pred_prob_batch = decoder(source_embedding).sigmoid()
       pred_prob[s_idx: e_idx] = pred_prob_batch.cpu().numpy()
+      
+      pickle.dump({'source_embedding':source_embedding.cpu().numpy(),
+                    'destination_embedding': destination_embedding.cpu().numpy(),
+                    'pred_prob_batch':pred_prob_batch.cpu().numpy(),
+                    'sources_batch': sources_batch.cpu().numpy(),
+                    'destinations_batch':destinations_batch.cpu().numpy(),
+                    'timestamps_batch':timestamps_batch.cpu().numpy(),
+                    'edge_idxs_batch':edge_idxs_batch.cpu().numpy(),
+                    'n_neighbors':n_neighbors,
+                  },open('results/node_eval_%d'%(run_idx),'wb'))
 
   auc_roc = roc_auc_score(data.labels, pred_prob)
   return auc_roc
