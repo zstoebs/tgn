@@ -15,6 +15,17 @@ def eval_edge_prediction(model, negative_edge_sampler, data, n_neighbors, batch_
   results_files = os.listdir('results')
   eval_files = [f for f in results_files if 'edge_eval' in f]
   run_idx = len(eval_files)
+  context_dict = {'pos_prob':[],
+                    'neg_prob':[],
+                    'pred_score':[],
+                    'true_label':[],
+                    'sources_batch': [],
+                    'destinations_batch': [],
+                    'negative_samples': [],
+                    'timestamps_batch': [],
+                    'edge_idxs_batch': [],
+                    'n_neighbors': [],
+                  }
 
   val_ap, val_auc = [], []
   with torch.no_grad():
@@ -47,17 +58,17 @@ def eval_edge_prediction(model, negative_edge_sampler, data, n_neighbors, batch_
 
       val_ap.append(average_precision_score(true_label, pred_score))
       val_auc.append(roc_auc_score(true_label, pred_score))
-      pickle.dump({'pos_prob':pos_prob.cpu().numpy(),
-                    'neg_prob':neg_prob.cpu().numpy(),
-                    'pred_score':pred_score,
-                    'true_label':true_label,
-                    'sources_batch': sources_batch,
-                    'destinations_batch':destinations_batch,
-                    'negative_samples':negative_samples,
-                    'timestamps_batch':timestamps_batch,
-                    'edge_idxs_batch':edge_idxs_batch,
-                    'n_neighbors':n_neighbors,
-                  },open('results/edge_eval_%d.pkl'%(run_idx)))
+      context_dict['pos_prob'] += [pos_prob.cpu().numpy()]
+      context_dict['neg_prob'] += [neg_prob.cpu().numpy()]
+      context_dict['pred_score'] += [pred_score]
+      context_dict['true_label'] += [true_label]
+      context_dict['sources_batch'] += [sources_batch]
+      context_dict['destinations_batch'] += [destinations_batch]
+      context_dict['negative_samples'] += [negative_samples]
+      context_dict['timestamps_batch'] += [timestamps_batch]
+      context_dict['edge_idxs_batch'] += [edge_idxs_batch]
+      context_dict['n_neighbors'] += [n_neighbors]
+    pickle.dump(context_dict,open('results/edge_eval_%d.pkl'%(run_idx),'wb'))
 
   return np.mean(val_ap), np.mean(val_auc)
 
@@ -69,7 +80,17 @@ def eval_node_classification(tgn, decoder, data, edge_idxs, batch_size, n_neighb
   results_files = os.listdir('results')
   eval_files = [f for f in results_files if 'node_eval' in f]
   run_idx = len(eval_files)
-
+  context_dict = {'source_embedding':[],
+                    'destination_embedding':[],
+                    'pred_prob_batch':[],
+                    'pred_prob':[],
+                    'sources_batch': [],
+                    'destinations_batch': [],
+                    'timestamps_batch': [],
+                    'edge_idxs_batch': [],
+                    'n_neighbors': [],
+                  }
+                  
   with torch.no_grad():
     decoder.eval()
     tgn.eval()
@@ -91,15 +112,16 @@ def eval_node_classification(tgn, decoder, data, edge_idxs, batch_size, n_neighb
       pred_prob_batch = decoder(source_embedding).sigmoid()
       pred_prob[s_idx: e_idx] = pred_prob_batch.cpu().numpy()
       
-      pickle.dump({'source_embedding':source_embedding,
-                    'destination_embedding': destination_embedding,
-                    'pred_prob_batch':pred_prob_batch.cpu().numpy(),
-                    'sources_batch': sources_batch,
-                    'destinations_batch':destinations_batch,
-                    'timestamps_batch':timestamps_batch,
-                    'edge_idxs_batch':edge_idxs_batch,
-                    'n_neighbors':n_neighbors,
-                  },open('results/node_eval_%d'%(run_idx),'wb'))
+      context_dict['source_embedding'] += [source_embedding]
+      context_dict['destination_embedding'] += [destination_embedding]
+      context_dict['pred_prob_batch'] += [pred_prob_batch.cpu().numpy()]
+      context_dict['pred_prob'] += [pred_prob]
+      context_dict['sources_batch'] += [sources_batch]
+      context_dict['destinations_batch'] += [destinations_batch]
+      context_dict['timestamps_batch'] += [timestamps_batch]
+      context_dict['edge_idxs_batch'] += [edge_idxs_batch]
+      context_dict['n_neighbors'] += [n_neighbors]
+    pickle.dump(context_dict,open('results/node_eval_%d.pkl'%(run_idx),'wb'))
 
   auc_roc = roc_auc_score(data.labels, pred_prob)
   return auc_roc
