@@ -51,11 +51,11 @@ def eval_edge_prediction(model, negative_edge_sampler, data, n_neighbors, batch_
                     'neg_prob':neg_prob.cpu().numpy(),
                     'pred_score':pred_score,
                     'true_label':true_label,
-                    'sources_batch': sources_batch.cpu().numpy(),
-                    'destinations_batch':destinations_batch.cpu().numpy(),
-                    'negative_samples':negative_samples.cpu().numpy(),
-                    'timestamps_batch':timestamps_batch.cpu().numpy(),
-                    'edge_idxs_batch':edge_idxs_batch.cpu().numpy(),
+                    'sources_batch': sources_batch,
+                    'destinations_batch':destinations_batch,
+                    'negative_samples':negative_samples,
+                    'timestamps_batch':timestamps_batch,
+                    'edge_idxs_batch':edge_idxs_batch,
                     'n_neighbors':n_neighbors,
                   },open('results/edge_eval_%d.pkl'%(run_idx)))
 
@@ -91,13 +91,13 @@ def eval_node_classification(tgn, decoder, data, edge_idxs, batch_size, n_neighb
       pred_prob_batch = decoder(source_embedding).sigmoid()
       pred_prob[s_idx: e_idx] = pred_prob_batch.cpu().numpy()
       
-      pickle.dump({'source_embedding':source_embedding.cpu().numpy(),
-                    'destination_embedding': destination_embedding.cpu().numpy(),
+      pickle.dump({'source_embedding':source_embedding,
+                    'destination_embedding': destination_embedding,
                     'pred_prob_batch':pred_prob_batch.cpu().numpy(),
-                    'sources_batch': sources_batch.cpu().numpy(),
-                    'destinations_batch':destinations_batch.cpu().numpy(),
-                    'timestamps_batch':timestamps_batch.cpu().numpy(),
-                    'edge_idxs_batch':edge_idxs_batch.cpu().numpy(),
+                    'sources_batch': sources_batch,
+                    'destinations_batch':destinations_batch,
+                    'timestamps_batch':timestamps_batch,
+                    'edge_idxs_batch':edge_idxs_batch,
                     'n_neighbors':n_neighbors,
                   },open('results/node_eval_%d'%(run_idx),'wb'))
 
