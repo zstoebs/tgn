@@ -25,4 +25,4 @@ source activate my_root
 #pip install torchio==0.17.0
 
 python3 train_self_supervised.py --use_memory --prefix tgn-attn --n_runs 10
-#:python3 train_supervised.py --use_memory --prefix tgn-attn --n_runs 10 --use_validation
+python3 train_supervised.py --use_memory --prefix tgn-attn --n_runs 10 --use_validation
