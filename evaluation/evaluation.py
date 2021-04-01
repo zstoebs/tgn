@@ -12,7 +12,7 @@ def eval_edge_prediction(model, negative_edge_sampler, data, n_neighbors, batch_
   # negatives for validation / test set)
   assert negative_edge_sampler.seed is not None
   negative_edge_sampler.reset_random_state()
-  results_files = os.listdir('results')
+  results_files = os.listdir('results/edge')
   eval_files = [f for f in results_files if 'edge_eval' in f]
   run_idx = len(eval_files)
   context_dict = {'pos_prob':[],
@@ -68,7 +68,7 @@ def eval_edge_prediction(model, negative_edge_sampler, data, n_neighbors, batch_
       context_dict['timestamps_batch'] += [timestamps_batch]
       context_dict['edge_idxs_batch'] += [edge_idxs_batch]
       context_dict['n_neighbors'] += [n_neighbors]
-    pickle.dump(context_dict,open('results/edge_eval_%d.pkl'%(run_idx),'wb'))
+    pickle.dump(context_dict,open('results/edge/edge_eval_%d.pkl'%(run_idx),'wb'))
 
   return np.mean(val_ap), np.mean(val_auc)
 
@@ -77,7 +77,7 @@ def eval_node_classification(tgn, decoder, data, edge_idxs, batch_size, n_neighb
   pred_prob = np.zeros(len(data.sources))
   num_instance = len(data.sources)
   num_batch = math.ceil(num_instance / batch_size)
-  results_files = os.listdir('results')
+  results_files = os.listdir('results/node')
   eval_files = [f for f in results_files if 'node_eval' in f]
   run_idx = len(eval_files)
   context_dict = {'source_embedding':[],
@@ -121,7 +121,7 @@ def eval_node_classification(tgn, decoder, data, edge_idxs, batch_size, n_neighb
       context_dict['timestamps_batch'] += [timestamps_batch]
       context_dict['edge_idxs_batch'] += [edge_idxs_batch]
       context_dict['n_neighbors'] += [n_neighbors]
-    pickle.dump(context_dict,open('results/node_eval_%d.pkl'%(run_idx),'wb'))
+    pickle.dump(context_dict,open('results/node/node_eval_%d.pkl'%(run_idx),'wb'))
 
   auc_roc = roc_auc_score(data.labels, pred_prob)
   return auc_roc
