@@ -115,7 +115,6 @@ def eval_node_classification(tgn, decoder, data, edge_idxs, batch_size, n_neighb
       context_dict['source_embedding'] += [source_embedding.cpu().numpy()]
       context_dict['destination_embedding'] += [destination_embedding.cpu().numpy()]
       context_dict['pred_prob_batch'] += [pred_prob_batch.cpu().numpy()]
-      context_dict['pred_prob'] += [pred_prob]
       context_dict['sources_batch'] += [sources_batch]
       context_dict['destinations_batch'] += [destinations_batch]
       context_dict['timestamps_batch'] += [timestamps_batch]
