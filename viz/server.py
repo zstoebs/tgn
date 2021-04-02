@@ -45,7 +45,8 @@ def get_graph_at_timestamp(timestamp):
 
 	node_bunch = []
 	for n1,n2,data in edge_graph.edges(data=True):
-		node_bunch += [n1,n2] if int(data['timestamp']) <= timestamp else []
+		keep = 'pos_prob' in data.keys()
+		node_bunch += [n1,n2] if keep and int(data['timestamp']) <= timestamp else []
 	return nx.subgraph(edge_graph,node_bunch)
 
 @app.route('/all_timestamps',methods=['GET'])
@@ -58,9 +59,11 @@ def get_timeframe():
 
 	tf = timestamps[:endtime]
 	subgraph = get_graph_at_timestamp(tf[-1])	
-	graph = json_graph.adjacency_data(subgraph)	
+	nodes = list(subgraph.nodes)
+	edges = list(subgraph.edges)
+	probs = [G[s][t]['pos_prob'] for s,t in edges]
 
-	return flask.jsonify({'timeframe':tf,'graph':graph})
+	return flask.jsonify({'timeframe':tf,'nodes':nodes,'edges':edges,'probs':probs})
 
 if __name__=='__main__':
 	edge_graph = read_json_graph('static/edge/edge_prediction.json')
