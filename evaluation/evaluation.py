@@ -112,8 +112,8 @@ def eval_node_classification(tgn, decoder, data, edge_idxs, batch_size, n_neighb
       pred_prob_batch = decoder(source_embedding).sigmoid()
       pred_prob[s_idx: e_idx] = pred_prob_batch.cpu().numpy()
       
-      context_dict['source_embedding'] += [source_embedding]
-      context_dict['destination_embedding'] += [destination_embedding]
+      context_dict['source_embedding'] += [source_embedding.cpu().numpy()]
+      context_dict['destination_embedding'] += [destination_embedding.cpu().numpy()]
       context_dict['pred_prob_batch'] += [pred_prob_batch.cpu().numpy()]
       context_dict['pred_prob'] += [pred_prob]
       context_dict['sources_batch'] += [sources_batch]
