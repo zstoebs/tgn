@@ -22,14 +22,11 @@ CORS(app)
 
 timestamps = None	
 edge_graph = None
-#node_graph = None
 
-def get_timestamps():
+def extract_timestamps_from_graph(G):
 	ts = []
-	for n1,n2,data in edge_graph.edges(data=True):
+	for n1,n2,data in G.edges(data=True):
 		ts += [int(data['timestamp'])]
-#	for n1,n2,data in node_graph.edges(data=True):
-#		ts += [int(data['timestamp'])]
 	ts.sort()
 	print('Number of timestamps: ', len(ts))
 	print('Earliest timestamp: ', ts[0])
@@ -41,16 +38,16 @@ def read_json_graph(fname):
 		js_graph = json.load(f)
 	return json_graph.node_link_graph(js_graph)
 
-def get_graph_at_timestamp(timestamp):
+def get_graph_at_timestamp(G,timestamp):
 
 	node_bunch = []
-	for n1,n2,data in edge_graph.edges(data=True):
-		keep = 'pos_prob' in data.keys()
+	for n1,n2,data in G.edges(data=True):
+		keep = 'pos_prob' in data.keys() # HARDCODED
 		node_bunch += [n1,n2] if keep and int(data['timestamp']) <= timestamp else []
-	return nx.subgraph(edge_graph,node_bunch)
+	return nx.subgraph(G,node_bunch)
 
-@app.route('/all_timestamps',methods=['GET'])
-def all_timestamps():
+@app.route('/get_timestamps',methods=['GET'])
+def get_timestamps():
 	return flask.jsonify(timestamps)
 
 @app.route('/get_timeframe',methods=['GET','POST'])
@@ -58,16 +55,15 @@ def get_timeframe():
 	endtime = request.get_json()
 
 	tf = timestamps[:endtime]
-	subgraph = get_graph_at_timestamp(tf[-1])	
+	subgraph = get_graph_at_timestamp(edge_graph,tf[-1]) # HARDCODED	
 	nodes = list(subgraph.nodes)
 	edges = list(subgraph.edges)
-	probs = [G[s][t]['pos_prob'] for s,t in edges]
+	pos_probs = [subgraph[s][t]['pos_prob'] for s,t in edges] # HARDCODED
 
-	return flask.jsonify({'timeframe':tf,'nodes':nodes,'edges':edges,'probs':probs})
+	return flask.jsonify({'timeframe':tf,'nodes':nodes,'edges':edges,'probs':pos_probs})
 
 if __name__=='__main__':
 	edge_graph = read_json_graph('static/edge/edge_prediction.json')
-#	node_graph = read_json_graph('static/node/node_classification.json')
-	timestamps = get_timestamps()	
+	timestamps = extract_timestamps_from_graph(edge_graph)	
 
 	app.run()
