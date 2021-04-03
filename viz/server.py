@@ -53,11 +53,12 @@ def get_timestamps():
 
 @app.route('/get_timeframe',methods=['GET','POST'])
 def get_timeframe():
-	endtime = request.get_json()
+	end = request.get_json()
 
-	tf = timestamps[:endtime]
+	tf = timestamps[:end+1]
 	subgraph = get_graph_at_timestamp(edge_graph,tf[-1]) # HARDCODED	
 	nodes = list(subgraph.nodes)
+	node_info = [{'id':node} for node in nodes]
 	edges = list(subgraph.edges)
 	edge_info = []
 	for s,t in edges:
@@ -66,12 +67,14 @@ def get_timeframe():
 		prob = subgraph[s][t]['pos_prob'] if check else subgraph[s][t]['neg_prob']
 		gt = 1 if check else 0
 		
-		info['edge'] = [s,t]
+		info['source'] = s
+		info['target'] = t
 		info['ground_truth'] = gt
-		info['prob'] = prob
+		info['prob'] = prob[0]
+		info['timestamp'] = int(subgraph[s][t]['timestamp'])
 		edge_info += [info]
 
-	return flask.jsonify({'timeframe':tf,'nodes':nodes,'edges':edge_info})
+	return flask.jsonify({'nodes':node_info,'edges':edge_info})
 
 if __name__=='__main__':
 	edge_graph = read_json_graph('static/edge/edge_prediction.json')
