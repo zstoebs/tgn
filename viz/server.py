@@ -34,7 +34,7 @@ def extract_timestamps_from_graph(G):
 	return ts
 
 def read_json_graph(fname):
-	with open(filename,'r') as f:
+	with open(fname,'r') as f:
 		js_graph = json.load(f)
 	return json_graph.node_link_graph(js_graph)
 
@@ -52,6 +52,7 @@ def get_timestamps():
 
 @app.route('/get_timeframe',methods=['GET','POST'])
 def get_timeframe():
+	print('here')
 	endtime = request.get_json()
 
 	tf = timestamps[:endtime]
@@ -76,4 +77,5 @@ if __name__=='__main__':
 	edge_graph = read_json_graph('static/edge/edge_prediction.json')
 	timestamps = extract_timestamps_from_graph(edge_graph)	
 
-	app.run()
+	app.run(host='localhost')
+	
