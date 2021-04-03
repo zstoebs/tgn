@@ -53,7 +53,6 @@ def get_timestamps():
 
 @app.route('/get_timeframe',methods=['GET','POST'])
 def get_timeframe():
-	print('here')
 	endtime = request.get_json()
 
 	tf = timestamps[:endtime]
