@@ -40,10 +40,10 @@ def read_json_graph(fname):
 
 def get_graph_at_timestamp(G,timestamp):
 
-	node_bunch = []
+	node_bunch = {}
 	for n1,n2,data in G.edges(data=True):
-		keep = 'pos_prob' in data.keys() # HARDCODED
-		node_bunch += [n1,n2] if keep and int(data['timestamp']) <= timestamp else []
+		if int(data['timestamp']) <= timestamp:
+			node_bunch.update([n1,n2])
 	return nx.subgraph(G,node_bunch)
 
 @app.route('/get_timestamps',methods=['GET'])
@@ -58,9 +58,19 @@ def get_timeframe():
 	subgraph = get_graph_at_timestamp(edge_graph,tf[-1]) # HARDCODED	
 	nodes = list(subgraph.nodes)
 	edges = list(subgraph.edges)
-	pos_probs = [subgraph[s][t]['pos_prob'] for s,t in edges] # HARDCODED
+	edge_info = []
+	for s,t in edges:
+		info = {}
+		check = 'pos_prob' in subgraph[s][t].keys()
+		prob = subgraph[s][t]['pos_prob'] if check else subgraph[s][t]['neg_prob']
+		gt = 1 if check else 0
+		
+		info['edge'] = [s,t]
+		info['ground_truth'] = gt
+		info['prob'] = prob
+		edge_info += [info]
 
-	return flask.jsonify({'timeframe':tf,'nodes':nodes,'edges':edges,'probs':pos_probs})
+	return flask.jsonify({'timeframe':tf,'nodes':nodes,'edges':edge_info})
 
 if __name__=='__main__':
 	edge_graph = read_json_graph('static/edge/edge_prediction.json')
