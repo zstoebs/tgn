@@ -40,10 +40,11 @@ def read_json_graph(fname):
 
 def get_graph_at_timestamp(G,timestamp):
 
-	node_bunch = {}
+	node_bunch = set()
 	for n1,n2,data in G.edges(data=True):
 		if int(data['timestamp']) <= timestamp:
-			node_bunch.update([n1,n2])
+			node_bunch.add(n1)
+			node_bunch.add(n2)
 	return nx.subgraph(G,node_bunch)
 
 @app.route('/get_timestamps',methods=['GET'])
