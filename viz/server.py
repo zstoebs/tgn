@@ -72,23 +72,46 @@ def parse_graph(subgraph):
 		# info['ground_truth'] = gt
 		info['prob'] = prob[0]
 		info['timestamp'] = int(subgraph[s][t]['timestamp'])
+		info['source_embed'] = subgraph[s][t]['source_embed']
+		info['dest_embed'] = subgraph[s][t]['dest_embed']
 		edge_info += [info]
 
 	return node_info, edge_info
 
-# def compose_full_graph():
-#
-# 	try:
-# 		for s, t in list(node_graph.edges):
-# 			edge_graph[s][t]['source_embed'] = node_graph[s][t]['source_embed']
-# 			edge_graph[s][t]['source_embed'] = node_graph[s][t]['source_embed']
-# 	except BaseException as e:
-# 		print(e)
+def compose_full_graph():
+
+	count = 0
+	for s, t in list(edge_graph.edges):
+		try:
+			edge_graph[s][t]['source_embed'] = node_graph[s][t]['source_embed']
+			edge_graph[s][t]['dest_embed'] = node_graph[s][t]['dest_embed']
+		except BaseException:
+			count += 1
+			edge_graph[s][t]['source_embed'] = None
+			edge_graph[s][t]['dest_embed'] = None
+
+	print('Num edges without context: ', count)
 
 
 @app.route('/get_timestamps',methods=['GET'])
 def get_timestamps():
 	return flask.jsonify(timestamps)
+
+@app.route('/get_subgraph_by_node_id',methods=['GET','POST'])
+def get_subgraph_by_node_id():
+	ids = request.get_json()
+	node_bunch = set()
+	for i in ids:
+		id = int(i)
+		node_bunch.add(id)
+		for n in edge_graph.neighbors(id):
+			node_bunch.add(n)
+			
+	subgraph = nx.subgraph(edge_graph, node_bunch)
+
+	node_info, edge_info = parse_graph(subgraph)
+
+	return flask.jsonify({'nodes': node_info, 'edges': edge_info})
 
 @app.route('/get_timeframe',methods=['GET','POST'])
 def get_timeframe():
@@ -109,7 +132,7 @@ if __name__=='__main__':
 	edge_graph = read_json_graph('static/edge/edge_prediction.json')
 	node_graph = read_json_graph('static/node/node_classification.json')
 
-	# compose_full_graph()
+	compose_full_graph()
 	timestamps = extract_timestamps_from_graph(edge_graph)	
 
 	app.run(host='localhost')
