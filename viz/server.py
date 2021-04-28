@@ -15,6 +15,7 @@ from flask_cors import CORS
 import math
 
 from sklearn.cluster import KMeans
+from sklearn.manifold import TSNE
 
 # create Flask app
 app = Flask(__name__)
@@ -45,7 +46,6 @@ def read_json_graph(fname):
 		if 'neg_prob' in g[s][t].keys():
 			g.remove_edge(s, t)
 	return g
-
 
 def get_graph_at_timestamp(G,timestamp):
 
@@ -90,7 +90,7 @@ def compose_full_graph():
 			edge_graph[s][t]['source_embed'] = None
 			edge_graph[s][t]['dest_embed'] = None
 
-	print('Num edges without context: ', count)
+	print('# edges without context: ', count)
 
 
 @app.route('/get_timestamps',methods=['GET'])
@@ -106,7 +106,7 @@ def get_subgraph_by_node_id():
 		node_bunch.add(id)
 		for n in edge_graph.neighbors(id):
 			node_bunch.add(n)
-			
+
 	subgraph = nx.subgraph(edge_graph, node_bunch)
 
 	node_info, edge_info = parse_graph(subgraph)
