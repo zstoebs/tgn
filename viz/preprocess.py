@@ -18,7 +18,7 @@ if __name__ == '__main__':
 	if args.build_type == 'edge':
 		attrs={'pos_prob':'pos_prob','neg_prob':'neg_prob','negative':'negative_samples'}	
 	elif args.build_type == 'node':
-		attrs={'dest_embed':'destination_embedding','source_embed':'source_embedding','pred_prob':'pred_prob_batch'}	
+		attrs={'dest_embed':'destination_embedding','source_embed':'source_embedding','pred_prob':'pred_prob_batch'}
 	else:
 		raise argparse.ArgumentTypeError('Unknown build type. Supported types are \'edge\' and \'node\'.')
 

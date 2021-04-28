@@ -37,17 +37,22 @@ class TemporalGraph:
 
 				self.graph.add_edge(source,dest,timestamp=ts,idx=edge_idx)
 
-				if self.build_type == 'edge':
-					self.graph[source][dest]['pos_prob'] = d[self.attrs['pos_prob']][i]
+				for attr in self.attrs.keys():
+					#print(i,len(d[self.attrs[attr]]))
+					self.graph[source][dest][attr] = d[self.attrs[attr]][i]
 
-					neg = d[self.attrs['negative']][i]
-					self.graph.add_edge(source,neg,timestamp=ts,idx=edge_idx)
-					self.graph[source][neg]['neg_prob'] = d[self.attrs['neg_prob']][i]
-
-				elif self.build_type == 'node':
-					self.graph.add_edge(source,dest,timestamp=ts,idx=edge_idx)
-					self.graph[source][dest]['dest_embed'] = d[self.attrs['dest_embed']][i]
-					self.graph.nodes[source]['source_embed'] = d[self.attrs['source_embed']][i]
-					self.graph.nodes[source]['pred_prob'] = d[self.attrs['pred_prob']][i]
+				# if self.build_type == 'edge':
+				# 	self.graph[source][dest]['pos_prob'] = d[self.attrs['pos_prob']][i]
+				#
+				# 	neg = d[self.attrs['negative']][i]
+				# 	self.graph[source][neg]['neg_prob'] = d[self.attrs['neg_prob']][i]
+				#
+				# elif self.build_type == 'node':
+				#
+				# 	self.graph[source][dest]['dest_embed'] = d[self.attrs['dest_embed']][i]
+				# 	self.graph.nodes[source]['source_embed'] = d[self.attrs['source_embed']][i]
+				# 	self.graph.nodes[source]['pred_prob'] = d[self.attrs['pred_prob']][i]
+				#
+                    
 	def at_time(self,timestamp):
 		pass			
