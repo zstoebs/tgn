@@ -21,6 +21,7 @@ from sklearn.manifold import TSNE
 app = Flask(__name__)
 CORS(app)
 
+tsne = TSNE(n_components=2)
 timestamps = None	
 edge_graph = None
 node_graph = None
@@ -126,7 +127,38 @@ def get_timeframe():
 @app.route('/get_graph',methods=['GET'])
 def get_graph():
 	node_info, edge_info = parse_graph(edge_graph)
-	return flask.jsonify({'nodes':node_info,'edges':edge_info}) 
+	return flask.jsonify({'nodes':node_info,'edges':edge_info})
+
+@app.route('/perform_tsne',methods=['GET','POST'])
+def perform_tsne():
+	nodes = request.get_json()
+	subgraph = nx.subgraph(edge_graph, nodes)
+	source_nodes = []
+	source_embeds = []
+	dest_nodes = []
+	dest_embeds = []
+	for s, t in list(subgraph.edges):
+		source_embed = subgraph[s][t]['source_embed']
+		dest_embed = subgraph[s][t]['dest_embed']
+		if source_embed and dest_embed:
+			source_nodes += [s]
+			source_embeds += [np.array(source_embed)]
+			dest_nodes += [t]
+			dest_embeds += [np.array(dest_embed)]
+
+	source_embeds = np.vstack(source_embeds)
+	dest_embeds = np.vstack(dest_embeds)
+
+	source_embedded = tsne.fit_transform(source_embeds)
+	dest_embedded = tsne.fit_transform(dest_embeds)
+
+	source_x = source_embedded[:, 0].tolist()
+	source_y = source_embedded[:, 1].tolist()
+
+	dest_x = dest_embedded[:, 0].tolist()
+	dest_y = dest_embedded[:, 1].tolist()
+
+	return flask.jsonify({'source_nodes': source_nodes, 'dest_nodes': dest_nodes, 'source_x': source_x, 'source_y': source_y, 'dest_x': dest_x, 'dest_y': dest_y})
 
 if __name__=='__main__':
 	edge_graph = read_json_graph('static/edge/edge_prediction.json')
