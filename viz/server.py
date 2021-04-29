@@ -1,10 +1,7 @@
-import os
 import flask
 import numpy as np
-import argparse
+
 import json
-import csv
-import pickle
 
 import networkx as nx
 from networkx.readwrite import json_graph
@@ -12,16 +9,15 @@ from networkx.readwrite import json_graph
 from flask import Flask
 from flask import request
 from flask_cors import CORS
-import math
 
-from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
 
 # create Flask app
 app = Flask(__name__)
 CORS(app)
 
-tsne = TSNE(n_components=2)
+tsne1 = TSNE(n_components=1)
+tsne2 = TSNE(n_components=2)
 timestamps = None	
 edge_graph = None
 node_graph = None
@@ -93,6 +89,23 @@ def compose_full_graph():
 
 	print('# edges without context: ', count)
 
+def get_embedding_info(nodes):
+	subgraph = nx.subgraph(edge_graph, nodes)
+	source_nodes = []
+	source_embeds = []
+	dest_nodes = []
+	dest_embeds = []
+	for s, t in list(subgraph.edges):
+		source_embed = subgraph[s][t]['source_embed']
+		dest_embed = subgraph[s][t]['dest_embed']
+		if source_embed and dest_embed:
+			source_nodes += [s]
+			source_embeds += [np.array(source_embed)]
+			dest_nodes += [t]
+			dest_embeds += [np.array(dest_embed)]
+
+	return source_nodes, source_embeds, dest_nodes, dest_embeds
+
 
 @app.route('/get_timestamps',methods=['GET'])
 def get_timestamps():
@@ -129,28 +142,29 @@ def get_graph():
 	node_info, edge_info = parse_graph(edge_graph)
 	return flask.jsonify({'nodes':node_info,'edges':edge_info})
 
-@app.route('/perform_tsne',methods=['GET','POST'])
-def perform_tsne():
+@app.route('/perform_tsne1',methods=['GET','POST'])
+def perform_tsne1():
 	nodes = request.get_json()
-	subgraph = nx.subgraph(edge_graph, nodes)
-	source_nodes = []
-	source_embeds = []
-	dest_nodes = []
-	dest_embeds = []
-	for s, t in list(subgraph.edges):
-		source_embed = subgraph[s][t]['source_embed']
-		dest_embed = subgraph[s][t]['dest_embed']
-		if source_embed and dest_embed:
-			source_nodes += [s]
-			source_embeds += [np.array(source_embed)]
-			dest_nodes += [t]
-			dest_embeds += [np.array(dest_embed)]
+	source_nodes, source_embeds, dest_nodes, dest_embeds = get_embedding_info(nodes)
 
 	source_embeds = np.vstack(source_embeds)
 	dest_embeds = np.vstack(dest_embeds)
 
-	source_embedded = tsne.fit_transform(source_embeds)
-	dest_embedded = tsne.fit_transform(dest_embeds)
+	source_embedded = tsne1.fit_transform(source_embeds)
+	dest_embedded = tsne1.fit_transform(dest_embeds)
+
+	return flask.jsonify({'source_nodes': source_nodes, 'dest_nodes': dest_nodes, 'x': source_embedded.tolist(), 'y': dest_embedded.tolist()})
+
+@app.route('/perform_tsne2',methods=['GET','POST'])
+def perform_tsne2():
+	nodes = request.get_json()
+	source_nodes, source_embeds, dest_nodes, dest_embeds = get_embedding_info(nodes)
+
+	source_embeds = np.vstack(source_embeds)
+	dest_embeds = np.vstack(dest_embeds)
+
+	source_embedded = tsne2.fit_transform(source_embeds)
+	dest_embedded = tsne2.fit_transform(dest_embeds)
 
 	source_x = source_embedded[:, 0].tolist()
 	source_y = source_embedded[:, 1].tolist()
